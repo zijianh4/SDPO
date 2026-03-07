@@ -1,12 +1,13 @@
 #!/bin/bash
 # =============================================================================
-# SDPO — Direct execution on a single node (no Slurm)
+# GRPO Baseline (Rich Feedback) — Direct execution on a single node (no Slurm)
+#
+# Requires: datasets/lcb_v6 (LiveCodeBench v6) — see data/README.md for setup
 #
 # Usage:
-#   bash experiments/local/run_sdpo.sh                          # run all combinations
-#   bash experiments/local/run_sdpo.sh --dry-run                # print commands only
-#   MODEL=Qwen/Qwen3-0.6B DATA=datasets/sciknoweval/chemistry \
-#       bash experiments/local/run_sdpo.sh                      # run one specific combo
+#   bash experiments/local/run_grpo_rich_feedback.sh
+#   bash experiments/local/run_grpo_rich_feedback.sh --dry-run
+#   MODEL=Qwen/Qwen3-1.7B DATA=datasets/lcb_v6 bash experiments/local/run_grpo_rich_feedback.sh
 # =============================================================================
 set -euo pipefail
 
@@ -36,32 +37,24 @@ export WANDB_ENTITY="${WANDB_ENTITY:-}"
 # =============================================================================
 # CONFIGURATION — edit these to select what to run
 # =============================================================================
-CONFIG_NAME="sdpo"
+CONFIG_NAME="baseline_grpo"
 
 MODELS=(
     "Qwen/Qwen3-0.6B"
     "Qwen/Qwen3-1.7B"
-    "Qwen/Qwen3-4B"
 )
 
 DATA_PATHS=(
-    "datasets/sciknoweval/biology"
-    "datasets/sciknoweval/chemistry"
-    "datasets/sciknoweval/material"
-    "datasets/sciknoweval/physics"
-    "datasets/tooluse"
+    "datasets/lcb_v6"
 )
 
-LRS=(1e-5)
+LRS=(1e-6)
 TRAIN_BATCH_SIZE=32
 ROLLOUT_N=8
-MINI_BATCH_SIZE=32
-ALPHA=0.5
-DISTILLATION_TOPK=100
-DONT_REPROMPT_ON_SELF_SUCCESS=True
+MINI_BATCH_SIZE=8
 
 # Override to run a single combination:
-#   MODEL=Qwen/Qwen3-0.6B DATA=datasets/sciknoweval/chemistry bash run_sdpo.sh
+#   MODEL=Qwen/Qwen3-1.7B DATA=datasets/lcb_v6 bash run_grpo_rich_feedback.sh
 if [[ -n "${MODEL:-}" ]]; then MODELS=("$MODEL"); fi
 if [[ -n "${DATA:-}" ]];  then DATA_PATHS=("$DATA"); fi
 if [[ -n "${LR:-}" ]];    then LRS=("$LR"); fi
@@ -75,7 +68,7 @@ for MODEL_PATH in "${MODELS[@]}"; do
 
             MODEL_SHORT=$(echo "$MODEL_PATH" | tr '/' '-')
             DATA_SHORT=$(basename "$DATA_PATH")
-            EXP_NAME="SDPO-${MODEL_SHORT}-${DATA_SHORT}-alpha${ALPHA}-lr${LR}"
+            EXP_NAME="GRPO-rich-${MODEL_SHORT}-${DATA_SHORT}-mbs${MINI_BATCH_SIZE}-lr${LR}"
 
             export EXPERIMENT="$EXP_NAME"
             export TASK="$DATA_PATH"
@@ -88,14 +81,10 @@ for MODEL_PATH in "${MODELS[@]}"; do
                 actor_rollout_ref.rollout.n="$ROLLOUT_N"
                 actor_rollout_ref.actor.ppo_mini_batch_size="$MINI_BATCH_SIZE"
                 actor_rollout_ref.actor.optim.lr="$LR"
-                actor_rollout_ref.actor.optim.lr_warmup_steps=10
-                actor_rollout_ref.actor.self_distillation.distillation_topk="$DISTILLATION_TOPK"
-                actor_rollout_ref.actor.self_distillation.alpha="$ALPHA"
-                actor_rollout_ref.actor.self_distillation.dont_reprompt_on_self_success="$DONT_REPROMPT_ON_SELF_SUCCESS"
-                actor_rollout_ref.actor.self_distillation.include_environment_feedback=False
+                actor_rollout_ref.actor.optim.lr_warmup_steps=0
                 algorithm.rollout_correction.rollout_is=token
-                actor_rollout_ref.rollout.val_kwargs.n=16
-                trainer.group_name=SDPO-generalization
+                actor_rollout_ref.rollout.val_kwargs.n=4
+                trainer.group_name=GRPO-rich-feedback
                 "${EXTRA_ARGS[@]}"
             )
 
@@ -104,7 +93,6 @@ for MODEL_PATH in "${MODELS[@]}"; do
             echo "Model      : $MODEL_PATH"
             echo "Dataset    : $DATA_PATH"
             echo "LR         : $LR"
-            echo "Alpha      : $ALPHA"
             echo "================================================================"
 
             if $DRY_RUN; then

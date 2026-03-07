@@ -11,9 +11,12 @@ def _add_prompt(ex):
         return PROMPT.format(problem=ex["problem"])
 
 
-def load_train(category: str = None) -> Dataset:
+def load_train(category: str = None, dataset_filter: str = None) -> Dataset:
+    """Load lasgroup/verifiable-corpus. Filter by kind (category) and/or by dataset name (e.g. dapo_math)."""
     ds = load_dataset("lasgroup/verifiable-corpus", split="train")
     ds = cast_large_strings(ds, columns=list(ds.features.keys()))
-    if not category is None:
+    if category is not None:
         ds = ds.filter(lambda ex: ex["kind"] == category)
+    if dataset_filter is not None:
+        ds = ds.filter(lambda ex: ex.get("dataset") == dataset_filter)
     return ds.map(lambda ex: {"prompt": _add_prompt(ex)})

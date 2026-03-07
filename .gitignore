@@ -8,11 +8,15 @@
 **/playground
 **/wandb
 
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 dataset/*
+datasets/dapo_math/
+datasets/lcb_v6.json
+datasets/lcb_v6/
 tensorflow/my_graph/*
 .idea/
 # C extensions

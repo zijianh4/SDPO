@@ -1,12 +1,14 @@
 #!/bin/bash
 # =============================================================================
-# GRPO Baseline — Direct execution on a single node (no Slurm)
+# GRPO on dapo_math (lasgroup/verifiable-corpus subset)
+#
+# Prerequisite: Prepare data first:
+#   bash experiments/local/prepare_dapo_math.sh
 #
 # Usage:
-#   bash experiments/local/run_grpo.sh                          # run all combinations
-#   bash experiments/local/run_grpo.sh --dry-run                # print commands only
-#   MODEL=Qwen/Qwen3-0.6B DATA=datasets/sciknoweval/chemistry \
-#       bash experiments/local/run_grpo.sh                      # run one specific combo
+#   bash experiments/local/run_grpo_dapo_math.sh
+#   bash experiments/local/run_grpo_dapo_math.sh --dry-run
+#   MODEL=Qwen/Qwen3-0.6B bash experiments/local/run_grpo_dapo_math.sh
 # =============================================================================
 set -euo pipefail
 
@@ -34,7 +36,7 @@ ulimit -c 0
 export WANDB_ENTITY="${WANDB_ENTITY:-}"
 
 # =============================================================================
-# CONFIGURATION — edit these to select what to run
+# CONFIGURATION — dapo_math from lasgroup/verifiable-corpus
 # =============================================================================
 CONFIG_NAME="baseline_grpo"
 
@@ -45,11 +47,7 @@ MODELS=(
 )
 
 DATA_PATHS=(
-    "datasets/sciknoweval/biology"
-    "datasets/sciknoweval/chemistry"
-    "datasets/sciknoweval/material"
-    "datasets/sciknoweval/physics"
-    "datasets/tooluse"
+    "datasets/dapo_math"
 )
 
 LRS=(1e-5 1e-6)
@@ -57,8 +55,6 @@ TRAIN_BATCH_SIZE=32
 ROLLOUT_N=8
 MINI_BATCH_SIZES=(8 32)
 
-# Override to run a single combination:
-#   MODEL=Qwen/Qwen3-0.6B DATA=datasets/sciknoweval/chemistry bash run_grpo.sh
 if [[ -n "${MODEL:-}" ]]; then MODELS=("$MODEL"); fi
 if [[ -n "${DATA:-}" ]];  then DATA_PATHS=("$DATA"); fi
 if [[ -n "${LR:-}" ]];    then LRS=("$LR"); fi
@@ -89,14 +85,14 @@ for MODEL_PATH in "${MODELS[@]}"; do
                     actor_rollout_ref.actor.optim.lr_warmup_steps=10
                     algorithm.rollout_correction.rollout_is=token
                     actor_rollout_ref.rollout.val_kwargs.n=16
-                    trainer.group_name=GRPO-generalization
+                    trainer.group_name=GRPO-dapo_math
                     "${EXTRA_ARGS[@]}"
                 )
 
                 echo "================================================================"
                 echo "Experiment : $EXP_NAME"
                 echo "Model      : $MODEL_PATH"
-                echo "Dataset    : $DATA_PATH"
+                echo "Dataset    : $DATA_PATH (dapo_math)"
                 echo "LR         : $LR"
                 echo "Mini-batch : $MINI_BATCH_SIZE"
                 echo "================================================================"

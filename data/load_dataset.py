@@ -30,13 +30,16 @@ def load_dataset_hf(
     embeddings_file: str | None = None,
 ) -> Dataset:
 
-    final_columns = ["idx", "kind", "dataset", "answer", "elo", "prompt", "description", "tests", "embedding", "system"]
+    final_columns = ["idx", "kind", "dataset", "data_source", "answer", "elo", "prompt", "description", "tests", "embedding", "system"]
 
     if category == "false":
         category = None
 
     if dataset_name == "lasgroup/verifiable-corpus":
-        ds = load_train(category)
+        ds = load_train(category=category)
+    elif dataset_name == "dapo_math":
+        # dapo_math is a subset of lasgroup/verifiable-corpus (filter by dataset == "dapo_math")
+        ds = load_train(dataset_filter="dapo_math")
     elif dataset_name == "Idavidrein/gpqa-D":
         ds = load_gpqa(category)
     elif dataset_name == "TIGER-Lab/MMLU-Pro":
@@ -76,6 +79,10 @@ def load_dataset_hf(
     else:
         ds = ds.map(lambda ex: {"dataset": "-" if ex["dataset"] is None else ex["dataset"]})
 
+    # Reward manager uses reward_fn_key="data_source"; ensure column exists for scoring.
+    if "data_source" not in ds.column_names:
+        ds = ds.add_column("data_source", ds["dataset"])
+
     if not "elo" in ds.column_names:
         ds = ds.add_column("elo", ["-"] * len(ds))
     else:
@@ -84,6 +91,7 @@ def load_dataset_hf(
     # Add correct suffix to each description
     ds = ds.map(lambda ex: {"description": ex["description"] + f" The solution will be evaluated in a {ex['kind']} environment."})
 
+    # Keep prompt as string here; data/preprocess.py builds chat format and reward_model for the trainer.
     final_columns = [c for c in final_columns if c in ds.column_names]
     ds = ds.select_columns(final_columns)
 
