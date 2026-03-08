@@ -1,14 +1,14 @@
 #!/bin/bash
 # =============================================================================
-# SDPO on dapo_math (lasgroup/verifiable-corpus subset)
+# SDPO on EleutherAI/hendrycks_math
 #
 # Prerequisite: Prepare data first:
-#   bash experiments/local/prepare_dapo_math.sh
+#   bash experiments/local/prepare_hendrycks_math.sh
 #
 # Usage:
-#   bash experiments/local/run_sdpo_dapo_math.sh
-#   bash experiments/local/run_sdpo_dapo_math.sh --dry-run
-#   MODEL=Qwen/Qwen3-0.6B bash experiments/local/run_sdpo_dapo_math.sh
+#   bash experiments/local/run_sdpo_hendrycks_math.sh
+#   bash experiments/local/run_sdpo_hendrycks_math.sh --dry-run
+#   MODEL=Qwen/Qwen3-0.6B bash experiments/local/run_sdpo_hendrycks_math.sh
 # =============================================================================
 set -euo pipefail
 
@@ -33,12 +33,11 @@ export PYTHONUNBUFFERED=1
 export PYTHONPATH="${SDPO_DIR}:${PYTHONPATH:-}"
 ulimit -c 0
 
-# Avoid Ray "keepalive watchdog timeout" when validation runs long (e.g. full val set × n samples)
 export RAY_GRPC_KEEPALIVE_TIMEOUT_MS=${RAY_GRPC_KEEPALIVE_TIMEOUT_MS:-600000}
 export WANDB_ENTITY="${WANDB_ENTITY:-}"
 
 # =============================================================================
-# CONFIGURATION — dapo_math from lasgroup/verifiable-corpus
+# CONFIGURATION — EleutherAI/hendrycks_math
 # =============================================================================
 CONFIG_NAME="sdpo"
 
@@ -49,7 +48,7 @@ MODELS=(
 )
 
 DATA_PATHS=(
-    "datasets/dapo_math"
+    "datasets/hendrycks_math"
 )
 
 LRS=(1e-5)
@@ -94,14 +93,14 @@ for MODEL_PATH in "${MODELS[@]}"; do
                 algorithm.rollout_correction.rollout_is=token
                 actor_rollout_ref.rollout.val_kwargs.n=4
                 trainer.test_freq=5
-                trainer.group_name=SDPO-dapo_math
+                trainer.group_name=SDPO-hendrycks_math
                 "${EXTRA_ARGS[@]}"
             )
 
             echo "================================================================"
             echo "Experiment : $EXP_NAME"
             echo "Model      : $MODEL_PATH"
-            echo "Dataset    : $DATA_PATH (dapo_math)"
+            echo "Dataset    : $DATA_PATH (EleutherAI/hendrycks_math)"
             echo "LR         : $LR"
             echo "Alpha      : $ALPHA"
             echo "================================================================"
@@ -116,3 +115,4 @@ for MODEL_PATH in "${MODELS[@]}"; do
         done
     done
 done
+

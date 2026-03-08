@@ -15,6 +15,7 @@ __pycache__/
 *$py.class
 dataset/*
 datasets/dapo_math/
+datasets/hendrycks_math/
 datasets/lcb_v6.json
 datasets/lcb_v6/
 tensorflow/my_graph/*
