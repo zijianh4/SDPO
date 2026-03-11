@@ -32,7 +32,7 @@ def _format_math(ex, dataset_name: str) -> dict:
     }
 
 
-def load_math(dataset_name: str) -> Dataset:
+def load_math(dataset_name: str, split: str | None = None) -> Dataset:
     assert dataset_name in [
         "math-ai/aime24",
         "math-ai/aime25",
@@ -43,7 +43,9 @@ def load_math(dataset_name: str) -> Dataset:
     ]
 
     if dataset_name == "openai/gsm8k":
-        ds = load_dataset("openai/gsm8k", "main", split="test")
+        # Use requested split (e.g. "train" or "test" for original HF splits); default "test" for backward compatibility
+        hf_split = split if split is not None else "test"
+        ds = load_dataset("openai/gsm8k", "main", split=hf_split)
     elif dataset_name == "EleutherAI/hendrycks_math":
         # Use all subject subsets (configs) and both train/test splits
         hendrycks_subjects = [

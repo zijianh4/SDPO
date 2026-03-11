@@ -59,6 +59,7 @@ MINI_BATCH_SIZE=32
 ALPHA=0.5
 DISTILLATION_TOPK=100
 DONT_REPROMPT_ON_SELF_SUCCESS=True
+ENABLE_THINKING=${ENABLE_THINKING:-false}
 
 if [[ -n "${MODEL:-}" ]]; then MODELS=("$MODEL"); fi
 if [[ -n "${DATA:-}" ]];  then DATA_PATHS=("$DATA"); fi
@@ -94,6 +95,7 @@ for MODEL_PATH in "${MODELS[@]}"; do
                 algorithm.rollout_correction.rollout_is=token
                 actor_rollout_ref.rollout.val_kwargs.n=4
                 trainer.test_freq=5
+                "data.apply_chat_template_kwargs={enable_thinking: ${ENABLE_THINKING}}"
                 trainer.group_name=SDPO-dapo_math
                 "${EXTRA_ARGS[@]}"
             )

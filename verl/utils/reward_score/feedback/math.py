@@ -16,7 +16,10 @@
 import re
 import signal
 from typing import Optional
+
 from math_verify import parse as mv_parse, verify as mv_verify
+
+from verl.utils.reward_score.math_reward import strip_string as normalize_math_answer
 
 FORMAT_PENALTY = False
 
@@ -107,9 +110,19 @@ def is_correct_strict_box(
 
     # Extract and check the boxed answer from the full (or pause-sliced) string
     boxed_pred = last_boxed_only_string(pred)
-    extracted_pred = remove_boxed(boxed_pred) if boxed_pred is not None else None
+    extracted_pred = remove_boxed(boxed_pred) if boxed_pred else None
 
-    return extracted_pred == gt, extracted_pred
+    if extracted_pred is None or extracted_pred == "":
+        return False, extracted_pred
+    if not gt:
+        return extracted_pred == gt, extracted_pred
+
+    # Normalize both sides (whitespace, LaTeX formatting) so e.g. "(-9, -3\sqrt{3}, 6)" matches "(-9,-3\sqrt{3},6)"
+    try:
+        correct = normalize_math_answer(extracted_pred) == normalize_math_answer(gt)
+    except Exception:
+        correct = extracted_pred == gt
+    return correct, extracted_pred
 
 
 def verify(

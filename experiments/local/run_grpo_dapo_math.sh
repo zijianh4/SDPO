@@ -54,6 +54,7 @@ LRS=(1e-5 1e-6)
 TRAIN_BATCH_SIZE=32
 ROLLOUT_N=8
 MINI_BATCH_SIZES=(8 32)
+ENABLE_THINKING=${ENABLE_THINKING:-false}
 
 if [[ -n "${MODEL:-}" ]]; then MODELS=("$MODEL"); fi
 if [[ -n "${DATA:-}" ]];  then DATA_PATHS=("$DATA"); fi
@@ -84,7 +85,8 @@ for MODEL_PATH in "${MODELS[@]}"; do
                     actor_rollout_ref.actor.optim.lr="$LR"
                     actor_rollout_ref.actor.optim.lr_warmup_steps=10
                     algorithm.rollout_correction.rollout_is=token
-                    actor_rollout_ref.rollout.val_kwargs.n=16
+                    actor_rollout_ref.rollout.val_kwargs.n=4
+                    "data.apply_chat_template_kwargs={enable_thinking: ${ENABLE_THINKING}}"
                     trainer.group_name=GRPO-dapo_math
                     "${EXTRA_ARGS[@]}"
                 )

@@ -28,6 +28,7 @@ def load_dataset_hf(
     num_el: int = None,
     category: str | None = None,
     embeddings_file: str | None = None,
+    split: str | None = None,
 ) -> Dataset:
 
     final_columns = ["idx", "kind", "dataset", "data_source", "answer", "elo", "prompt", "description", "tests", "embedding", "system"]
@@ -52,7 +53,7 @@ def load_dataset_hf(
         "openai/gsm8k",
         "EleutherAI/hendrycks_math",
     ]:
-        ds = load_math(dataset_name)
+        ds = load_math(dataset_name, split=split)
     elif dataset_name in ["open-r1/codeforces", "Qwen/CodeElo", "livecodebench/code_generation_lite-v6", "evalplus/humanevalplus", "evalplus/mbppplus"]:
         ds = load_code(dataset_name)
     elif dataset_name == "tooluse":
@@ -159,6 +160,10 @@ if __name__ == "__main__":
         "--seed", type=int, default=42,
         help="Seed for the dataset."
     )
+    parser.add_argument(
+        "--split", type=str, default=None,
+        help="HuggingFace split to load (e.g. 'train', 'test'). Uses dataset default if not set."
+    )
     args = parser.parse_args()
     load_dataset_hf(
         dataset_name=args.dataset_name,
@@ -167,4 +172,5 @@ if __name__ == "__main__":
         num_el=args.num_el,
         category=args.category,
         embeddings_file=args.embeddings_file,
+        split=args.split,
     )
